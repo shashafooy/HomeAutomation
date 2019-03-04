@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#008577</color>
-    <color name="colorPrimaryDark">#00574B</color>
-    <color name="colorAccent">#D81B60</color>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="appBackground">#BEC8FC</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="white_90">#E6E6E6</color>
+    <color name="white_80">#CDCDCD</color>
+    <color name="white_70">#B3B3B3</color>
+    <color name="white_60">#999999</color>
+    <color name="white_50">#808080</color>
+
+
+
 </resources>
