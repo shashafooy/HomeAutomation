@@ -58,7 +58,7 @@
             android:layout_height="match_parent">
 
             <TextView
-                android:id="@+id/login_textView"
+                android:id="@+id/loginHeader_textView"
                 android:layout_width="0dp"
                 android:layout_height="56dp"
                 android:background="@color/white_50"
@@ -71,19 +71,19 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <EditText
-                android:id="@+id/editText"
+                android:id="@+id/password_Edit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="30dp"
                 android:ems="10"
                 android:hint="Password"
                 android:inputType="textPassword"
-                app:layout_constraintEnd_toEndOf="@+id/editText2"
-                app:layout_constraintStart_toStartOf="@+id/editText2"
-                app:layout_constraintTop_toBottomOf="@+id/editText2" />
+                app:layout_constraintEnd_toEndOf="@+id/username_edit"
+                app:layout_constraintStart_toStartOf="@+id/username_edit"
+                app:layout_constraintTop_toBottomOf="@+id/username_edit" />
 
             <EditText
-                android:id="@+id/editText2"
+                android:id="@+id/username_edit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
@@ -95,44 +95,44 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.514"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/login_textView" />
+                app:layout_constraintTop_toBottomOf="@+id/loginHeader_textView" />
 
             <Button
-                android:id="@+id/button"
+                android:id="@+id/loginBtn"
                 style="@android:style/Widget.Material.Light.Button"
                 android:layout_width="113dp"
                 android:layout_height="31dp"
                 android:layout_marginTop="8dp"
                 android:background="@color/white_50"
                 android:text="Log In"
+                android:onClick="login"
                 android:textColor="@android:color/white"
-                app:layout_constraintEnd_toEndOf="@+id/editText"
-                app:layout_constraintStart_toStartOf="@+id/editText"
-                app:layout_constraintTop_toBottomOf="@+id/TextView" />
+                app:layout_constraintEnd_toEndOf="@+id/password_Edit"
+                app:layout_constraintStart_toStartOf="@+id/password_Edit"
+                app:layout_constraintTop_toBottomOf="@+id/error_TextView" />
 
             <TextView
-                android:id="@+id/TextView"
+                android:id="@+id/error_TextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="Incorrect ID/password"
                 android:textColor="@android:color/holo_red_light"
-                app:layout_constraintEnd_toEndOf="@+id/editText"
-                app:layout_constraintStart_toStartOf="@+id/editText"
-                app:layout_constraintTop_toBottomOf="@+id/editText" />
+                app:layout_constraintEnd_toEndOf="@+id/password_Edit"
+                app:layout_constraintStart_toStartOf="@+id/password_Edit"
+                app:layout_constraintTop_toBottomOf="@+id/password_Edit" />
         </android.support.constraint.ConstraintLayout>
 
     </android.support.v7.widget.CardView>
 
     <TextView
-        android:id="@+id/textView3"
+        android:id="@+id/loginInfo_TextView"
         android:layout_width="223dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="30dp"
-        android:text="Server Id and password are found on the server box installed in your home."
+        android:text="@string/login_info"
         android:textAlignment="center"
-        android:textAllCaps="false"
         android:textColor="#000"
         app:layout_constraintEnd_toEndOf="@+id/cardView2"
         app:layout_constraintStart_toStartOf="@+id/cardView2"
