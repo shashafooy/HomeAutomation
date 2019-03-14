@@ -73,7 +73,6 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:layout_marginEnd="24dp"
-                    android:thumbTint="@color/white_50"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
             </android.support.constraint.ConstraintLayout>
@@ -99,21 +98,20 @@
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <Button
-                    android:id="@+id/defaultBtn"
+                    android:id="@+id/startDefaultBtn"
                     android:layout_width="wrap_content"
-                    android:layout_height="31dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="84dp"
                     android:layout_marginTop="8dp"
                     android:layout_marginBottom="8dp"
-                    android:text="Default"
-                    android:textSize="10sp"
+                    android:text="@string/start_default"
+                    android:textSize="12sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <EditText
-                    android:id="@+id/timeEditText"
-                    style="@style/Widget.MaterialComponents.TextInputEditText.OutlinedBox.Dense"
+                    android:id="@+id/timeStart_Edit"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
@@ -121,11 +119,11 @@
                     android:layout_marginEnd="8dp"
                     android:layout_marginBottom="8dp"
                     android:ems="10"
-                    android:inputType="time"
-                    android:text="9:00pm"
+                    android:inputType="textPersonName"
+                    android:text="9:00 pm"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/defaultBtn"
+                    app:layout_constraintStart_toEndOf="@+id/startDefaultBtn"
                     app:layout_constraintTop_toTopOf="parent" />
             </android.support.constraint.ConstraintLayout>
 
@@ -150,32 +148,32 @@
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <Button
-                    android:id="@+id/defaultBtn2"
+                    android:id="@+id/endDefaultBtn"
                     android:layout_width="wrap_content"
-                    android:layout_height="31dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="84dp"
                     android:layout_marginTop="8dp"
                     android:layout_marginBottom="8dp"
-                    android:text="Default"
-                    android:textSize="10sp"
+                    android:text="@string/end_default"
+                    android:textSize="12sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <EditText
-                    android:id="@+id/timeEditText2"
-                    style="@style/Widget.MaterialComponents.TextInputEditText.OutlinedBox.Dense"
+                    android:id="@+id/timeEnd_Edit"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
                     android:layout_marginTop="8dp"
                     android:layout_marginEnd="8dp"
                     android:layout_marginBottom="8dp"
                     android:ems="10"
-                    android:inputType="time"
-                    android:text="12:00am"
+                    android:inputType="textPersonName"
+                    android:text="12:00 am"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/defaultBtn2"
+                    app:layout_constraintStart_toEndOf="@+id/endDefaultBtn"
                     app:layout_constraintTop_toTopOf="parent" />
             </android.support.constraint.ConstraintLayout>
 
@@ -183,7 +181,7 @@
     </android.support.v7.widget.CardView>
 
     <Button
-        android:id="@+id/save"
+        android:id="@+id/saveBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="32dp"

@@ -21,7 +21,7 @@
         <activity android:name=".WasherDryerActivity"></activity>
         <activity android:name=".SettingsActivity"></activity>
         <activity android:name=".LightingActivity"></activity>
-        <activity android:name=".LightingOptionsActivity" />
+        <activity android:name=".LightingOptionsActivity"></activity>
     </application>
 
 </manifest>

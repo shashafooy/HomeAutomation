@@ -1,61 +1,258 @@
 package com.example.homeautomation;
 
+import android.app.Activity;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
-import android.provider.ContactsContract;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import org.w3c.dom.Text;
-
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.text.ParseException;
+import java.util.Calendar;
+import java.util.Date;
 
 public class LightingOptionsActivity extends AppCompatActivity {
-    LightController light, oldLightInstance;
-    TextView lightName;
-    Switch timerSwitch;
-    EditText startTime, endTime;
-    Button saveBtn;
+    private LightController light, oldLightInstance;
+    private TextView lightName;
+    private Switch timerSwitch;
+    private EditText startTime, endTime, newName;
+    private Button saveBtn, sunriseBtn, sunsetBtn;
+    private boolean infoEdited;
+    private int month;
+    private AlertDialog.Builder exitDialogBuilder;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.lighting_options);
+        infoEdited = false;
+        month = Calendar.getInstance().get(Calendar.MONTH);
 
-        light = new LightController(getIntent().getExtras().getString(Constants.LightKey));
+        light = getIntent().getParcelableExtra(Constants.LightKey);
         oldLightInstance = new LightController(light);
 
         lightName = findViewById(R.id.lightingOptionsTitle);
         lightName.setText(light.getLightName());
+
+        newName = findViewById(R.id.LightName_edit);
+        newName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                infoEdited = true;
+                light.setLightName(s.toString());
+            }
+        });
 
         timerSwitch = findViewById(R.id.timerSwitch);
         timerSwitch.setChecked(light.getTimerActive());
         timerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                infoEdited=true;
                 light.setTimerActive(isChecked);
             }
         });
 
+        startTime = findViewById(R.id.timeStart_Edit);
         startTime.setText(light.timeFormat.format(light.getTimerOnTime()));
-        endTime.setText(light.timeFormat.format(light.getTimerOffTime()));
-
-        saveBtn = findViewById(R.id.save);
-        saveBtn.setOnClickListener(new View.OnClickListener() {
+        startTime.addTextChangedListener(new TextWatcher() {
             @Override
-            public void onClick(View v) {
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                infoEdited = true;
+                try {
+                    light.setTimerOnTime(light.timeFormat.parse(s.toString()));
+                    startTime.setError(null);
+                } catch (ParseException e) {
+                    startTime.setError("Invalid format, please enter \"hh:mm am/pm\"");
+                }
             }
         });
 
+        endTime = findViewById(R.id.timeEnd_Edit);
+        endTime.setText(light.timeFormat.format(light.getTimerOffTime()));
+        endTime.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                infoEdited = true;
+                try {
+                    light.setTimerOffTime(light.timeFormat.parse(s.toString()));
+                    endTime.setError(null);
+                } catch (ParseException e) {
+                    endTime.setError("Invalid format, please enter \"hh:mm am/pm\"");
+                }
+            }
+        });
+
+        sunriseBtn = findViewById(R.id.startDefaultBtn);
+        sunriseBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    startTime.setText(light.timeFormat.format(getSunriseTime(month)));
+                } catch (ParseException e) {
+                    startTime.setText("Error");
+                }
+            }
+        });
+
+        sunsetBtn = findViewById(R.id.endDefaultBtn);
+        sunsetBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    endTime.setText(light.timeFormat.format(getSunsetTime(month)));
+                } catch (ParseException e) {
+                    startTime.setText("Error");
+                }
+            }
+        });
+
+        saveBtn = findViewById(R.id.saveBtn);
+        saveBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                light.saveInfo();
+                setResult(Activity.RESULT_OK, new Intent().putExtra(Constants.LightKey,light).putExtra(Constants.OldLightKey,oldLightInstance));
+                finish();
+            }
+        });
+
+        exitDialogBuilder =  new AlertDialog.Builder(this)
+                .setTitle("Exit Options")
+                .setMessage("Are you sure you want to leave without saving?")
+                .setCancelable(true)
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    //exit without saving
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //light = oldLightInstance;
+                        //setResult(Activity.RESULT_OK, new Intent().putExtra(Constants.LightKey,light).putExtra(Constants.OldLightKey,oldLightInstance.getLightName()));
+                        finish();
+
+                    }
+                })
+                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert);
+    }
 
 
 
 
+
+    @Override
+    public void onBackPressed(){
+        //super.onBackPressed();
+        if(infoEdited){
+            AlertDialog exitAlert = exitDialogBuilder.create();
+            exitAlert.show();
+        }else {
+            finish();
+        }
+    }
+
+    private Date getSunriseTime(int month) throws ParseException {
+        switch(month){
+            case Calendar.JANUARY:
+                return light.timeFormat.parse("7:00 am");
+            case Calendar.FEBRUARY:
+                return light.timeFormat.parse("6:45 am");
+            case Calendar.MARCH:
+                return light.timeFormat.parse("7:00 am");
+            case Calendar.APRIL:
+                return light.timeFormat.parse("6:27 am");
+            case Calendar.MAY:
+                return light.timeFormat.parse("5:40 am");
+            case Calendar.JUNE:
+                return light.timeFormat.parse("5:00 am");
+            case Calendar.JULY:
+                return light.timeFormat.parse("5:15 am");
+            case Calendar.AUGUST:
+                return light.timeFormat.parse("5:35 am");
+            case Calendar.SEPTEMBER:
+                return light.timeFormat.parse("6:15 am");
+            case Calendar.OCTOBER:
+                return light.timeFormat.parse("6:45 am");
+            case Calendar.NOVEMBER:
+                return light.timeFormat.parse("6:15 am");
+            case Calendar.DECEMBER:
+                return light.timeFormat.parse("6:45 am");
+
+        }
+        return null;
+    }
+
+    private Date getSunsetTime(int month) throws ParseException {
+        switch(month){
+            case Calendar.JANUARY:
+                return light.timeFormat.parse("6:00 pm");
+            case Calendar.FEBRUARY:
+                return light.timeFormat.parse("6:30 pm");
+            case Calendar.MARCH:
+                return light.timeFormat.parse("8:15 pm");
+            case Calendar.APRIL:
+                return light.timeFormat.parse("8:45 pm");
+            case Calendar.MAY:
+                return light.timeFormat.parse("9:15 pm");
+            case Calendar.JUNE:
+                return light.timeFormat.parse("9:45 pm");
+            case Calendar.JULY:
+                return light.timeFormat.parse("9:35 pm");
+            case Calendar.AUGUST:
+                return light.timeFormat.parse("9:20 pm");
+            case Calendar.SEPTEMBER:
+                return light.timeFormat.parse("8:15 pm");
+            case Calendar.OCTOBER:
+                return light.timeFormat.parse("7:30 pm");
+            case Calendar.NOVEMBER:
+                return light.timeFormat.parse("5:50 pm");
+            case Calendar.DECEMBER:
+                return light.timeFormat.parse("5:45 pm");
+
+        }
+        return null;
     }
 }
