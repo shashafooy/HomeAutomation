@@ -18,36 +18,27 @@ import android.widget.TextView;
 import java.util.ArrayList;
 
 public class LightingAdapter extends BaseAdapter implements ListAdapter {
-    private ArrayList<LightController> list; //list of light names
     private Context context;
     // private LightController light;
 
-    public LightingAdapter(ArrayList<LightController> list, Context context){
-        this.list=list;
+    public LightingAdapter(Context context){
         this.context=context;
     }
 
     @Override
     public int getCount() {
-        return list.size();
+        return myDatabase.getLightList().size();
     }
 
     @Override
     public Object getItem(int position) {
-        return list.get(position);
+        return myDatabase.getLightList().get(position);
     }
 
     @Override
     public long getItemId(int position) {
-        //return list.get(position).getId();
+        //return myDatabase.getLightList().get(position).getId();
         return 0;
-    }
-    public void updateList(ArrayList<LightController> list){
-        this.list=list;
-    }
-
-    public ArrayList<LightController> getList(){
-        return list;
     }
 
     @Override
@@ -58,9 +49,8 @@ public class LightingAdapter extends BaseAdapter implements ListAdapter {
             view = inflater.inflate(R.layout.light_bar,null);
         }
 
-        TextView listItemText = (TextView)view.findViewById(R.id.lightName);
-        listItemText.setText(list.get(position).getLightName());
-        //light = new LightController(listItemText.getText().toString());
+        TextView listItemText = view.findViewById(R.id.lightName);
+        listItemText.setText(myDatabase.getLightList().get(position).getLightName());
 
         ImageButton settingsBtn = (ImageButton)view.findViewById(R.id.lightSettingsBtn);
         final Switch lightSwitch = (Switch)view.findViewById(R.id.lightSwitch);
@@ -70,7 +60,7 @@ public class LightingAdapter extends BaseAdapter implements ListAdapter {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(v.getContext(),LightingOptionsActivity.class);
-                intent.putExtra(Constants.LightKey,list.get(position));
+                intent.putExtra(Constants.LightKey,myDatabase.getLightList().get(position).getLightName()); //TODO check this
                 ((Activity) context).startActivityForResult(intent, Constants.RequestLightCode);
                 notifyDataSetChanged();
 
@@ -79,14 +69,14 @@ public class LightingAdapter extends BaseAdapter implements ListAdapter {
         lightSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked) list.get(position).turnOn();
-                else list.get(position).turnOff();
+                if(isChecked) myDatabase.getLightList().get(position).turnOn();
+                else myDatabase.getLightList().get(position).turnOff();
                 notifyDataSetChanged();
             }
         });
 
         ImageView timerIcon = view.findViewById(R.id.lightTimer);
-        timerIcon.setVisibility(list.get(position).getTimerActive() ? View.VISIBLE : View.INVISIBLE);
+        timerIcon.setVisibility(myDatabase.getLightList().get(position).getTimerActive() ? View.VISIBLE : View.INVISIBLE);
 
         return view;
     }
@@ -97,19 +87,6 @@ public class LightingAdapter extends BaseAdapter implements ListAdapter {
 
         switch(requestCode){
             case Constants.RequestLightCode:
-                if(resultCode == Activity.RESULT_OK){
-                    light = data.getParcelableExtra(Constants.LightKey);
-                    oldLight = data.getParcelableExtra(Constants.OldLightKey);
-                    int pos = 0;
-                    for (LightController l : list){
-                        if(l.getLightName().equals(oldLight.getLightName())){
-                            break;
-                        }
-                        pos++;
-                    }
-                    if(pos==list.size()) throw new ArrayIndexOutOfBoundsException();
-                    list.set(pos, light);
-                }
                 notifyDataSetChanged();
 
                 break;

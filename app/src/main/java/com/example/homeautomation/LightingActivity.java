@@ -29,13 +29,7 @@ public class LightingActivity extends AppCompatActivity
         setContentView(R.layout.lighting_main);
         counter++; //number of instances of activity
 
-        ArrayList<LightController> list = new ArrayList<>();
-        //TODO populate list with lights
-        for(int i=0; i<4; i++){
-            list.add(new LightController("light"+i));
-        }
-
-        lightingAdapter = new LightingAdapter(list,this);
+        lightingAdapter = new LightingAdapter(this);
 
         lView = findViewById(R.id.lightingListView);
         lView.setAdapter(lightingAdapter);

@@ -2,6 +2,12 @@ package com.example.homeautomation;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
 
 import java.io.Serializable;
 import java.text.DateFormat;
@@ -11,24 +17,61 @@ import java.util.Date;
 
 public class LightController implements Parcelable {
     private String lightName;
-    private Boolean timerActive;
+    private Boolean timerActive, lightActive;
     private Date timerOnTime;
     private Date timerOffTime;
     // may need hh instead of h, hh will cause leading 0 (07:00)
-    public DateFormat timeFormat = new SimpleDateFormat("h:mm a");
+    public static DateFormat timeFormat = new SimpleDateFormat("h:mm a");
+    private DatabaseReference lightReference;
 
 
-    public LightController(String lightName){
-        this.lightName = lightName;
-        //TODO look up light in database
-        this.timerActive = false;
-        try {
-            this.timerOnTime = timeFormat.parse("12:00 am");
-            this.timerOffTime = timeFormat.parse("12:00 pm");
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+//    public LightController(String lightName){
+//        lightReference=myDatabase.getLightReference(lightName);
+//        this.lightName=lightName;
+//        lightReference.addValueEventListener(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+//                lightActive = (Boolean) dataSnapshot.child("Active").getValue();
+//                timerActive = (Boolean) dataSnapshot.child("TimerActive").getValue();
+//                try {
+//                    timerOnTime = timeFormat.parse((String) dataSnapshot.child("TimerOn").getValue());
+//                    timerOffTime = timeFormat.parse((String) dataSnapshot.child("TimerOff").getValue());
+//                } catch (ParseException e) {
+//                    e.printStackTrace();
+//                }
+//                notify();
+//            }
+//
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError databaseError) {
+//
+//            }
+//        });
+//
+//    }
 
+    public LightController(DatabaseReference lightRef){
+        lightReference=lightRef;
+        lightReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                lightName = (String) dataSnapshot.child("Name").getValue();
+                lightActive = (Boolean) dataSnapshot.child("Active").getValue();
+                timerActive = (Boolean) dataSnapshot.child("TimerActive").getValue();
+                try {
+                    timerOnTime = timeFormat.parse((String) dataSnapshot.child("TimerOn").getValue());
+                    timerOffTime = timeFormat.parse((String) dataSnapshot.child("TimerOff").getValue());
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                notify();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
     }
 
     public LightController(LightController another){
@@ -36,6 +79,7 @@ public class LightController implements Parcelable {
         this.timerActive = another.getTimerActive();
         this.timerOnTime = another.getTimerOnTime();
         this.timerOffTime = another.getTimerOffTime();
+        this.lightReference = another.lightReference;
     }
 
     public LightController(Parcel source){
@@ -43,6 +87,7 @@ public class LightController implements Parcelable {
         timerActive = source.readByte() != 0;
         timerOnTime = new Date(source.readLong());
         timerOffTime = new Date(source.readLong());
+        lightReference = myDatabase.getLightReference(lightName);
 
     }
 
@@ -52,7 +97,7 @@ public class LightController implements Parcelable {
     }
 
     @Override
-    public void writeToParcel(Parcel dest, int flags) {
+    public void writeToParcel(final Parcel dest, int flags) {
         dest.writeString(lightName);
         dest.writeByte((byte)(timerActive ? 1 : 0));
         dest.writeLong(timerOnTime.getTime());
@@ -71,16 +116,30 @@ public class LightController implements Parcelable {
         }
     };
 
+    public void copyLightParameters(LightController light){
+        lightActive = light.lightActive;
+        lightName = light.lightName;
+        timerActive = light.timerActive;
+        timerOffTime = light.timerOffTime;
+        timerOnTime = light.timerOnTime;
+    }
+
     public void turnOn() {
-        //TODO update database to turn on light
+        lightActive=true;
+        lightReference.child("Active").setValue(true);
     }
 
     public void turnOff() {
-        //TODO update database to turn off light
+        lightActive=false;
+        lightReference.child("Active").setValue(false);
     }
 
     public void saveInfo(){
-        //TODO push data to database
+        lightReference.child("Active").setValue(lightActive);
+        lightReference.child("Name").setValue(lightName);
+        lightReference.child("TimerActive").setValue(timerActive);
+        lightReference.child("TimerOff").setValue(timeFormat.format(timerOffTime));
+        lightReference.child("TimerOn").setValue(timeFormat.format(timerOnTime));
 
     }
 
@@ -116,5 +175,9 @@ public class LightController implements Parcelable {
         this.timerOffTime = timerOffTime;
     }
 
+    public DatabaseReference getLightReference() { return lightReference; }
 
+    public Boolean getLightActive() { return lightActive; }
+
+    public void setLightActive(Boolean lightActive) { this.lightActive = lightActive; }
 }

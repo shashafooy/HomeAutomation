@@ -20,13 +20,13 @@ import java.util.Calendar;
 import java.util.Date;
 
 public class LightingOptionsActivity extends AppCompatActivity {
-    private LightController light, oldLightInstance;
-    private TextView lightName;
+    private LightController light, newLightInstance;
+    private TextView lightNameView;
     private Switch timerSwitch;
-    private EditText startTime, endTime, newName;
+    private EditText startTime, endTime, newNameEdit;
     private Button saveBtn, sunriseBtn, sunsetBtn;
     private boolean infoEdited;
-    private int month;
+    private int month, lightPos;
     private AlertDialog.Builder exitDialogBuilder;
 
 
@@ -36,15 +36,22 @@ public class LightingOptionsActivity extends AppCompatActivity {
         setContentView(R.layout.lighting_options);
         infoEdited = false;
         month = Calendar.getInstance().get(Calendar.MONTH);
+        String name = getIntent().getStringExtra(Constants.LightKey);
+        for (LightController light :
+                myDatabase.getLightList()) {
+            if (light.getLightName().equals(name)) {
+                this.light = light;
+                lightPos = myDatabase.getLightList().indexOf(light);
+                break;
+            }
+        }
+        newLightInstance = new LightController(light);
 
-        light = getIntent().getParcelableExtra(Constants.LightKey);
-        oldLightInstance = new LightController(light);
+        lightNameView = findViewById(R.id.lightingOptionsTitle);
+        lightNameView.setText(light.getLightName());
 
-        lightName = findViewById(R.id.lightingOptionsTitle);
-        lightName.setText(light.getLightName());
-
-        newName = findViewById(R.id.LightName_edit);
-        newName.addTextChangedListener(new TextWatcher() {
+        newNameEdit = findViewById(R.id.LightName_edit);
+        newNameEdit.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
@@ -58,7 +65,7 @@ public class LightingOptionsActivity extends AppCompatActivity {
             @Override
             public void afterTextChanged(Editable s) {
                 infoEdited = true;
-                light.setLightName(s.toString());
+                newLightInstance.setLightName(s.toString());
             }
         });
 
@@ -68,12 +75,12 @@ public class LightingOptionsActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 infoEdited=true;
-                light.setTimerActive(isChecked);
+                newLightInstance.setTimerActive(isChecked);
             }
         });
 
         startTime = findViewById(R.id.timeStart_Edit);
-        startTime.setText(light.timeFormat.format(light.getTimerOnTime()));
+        startTime.setText(LightController.timeFormat.format(light.getTimerOnTime()));
         startTime.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -89,7 +96,7 @@ public class LightingOptionsActivity extends AppCompatActivity {
             public void afterTextChanged(Editable s) {
                 infoEdited = true;
                 try {
-                    light.setTimerOnTime(light.timeFormat.parse(s.toString()));
+                    newLightInstance.setTimerOnTime(LightController.timeFormat.parse(s.toString()));
                     startTime.setError(null);
                 } catch (ParseException e) {
                     startTime.setError("Invalid format, please enter \"hh:mm am/pm\"");
@@ -98,7 +105,7 @@ public class LightingOptionsActivity extends AppCompatActivity {
         });
 
         endTime = findViewById(R.id.timeEnd_Edit);
-        endTime.setText(light.timeFormat.format(light.getTimerOffTime()));
+        endTime.setText(LightController.timeFormat.format(light.getTimerOffTime()));
         endTime.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -114,7 +121,7 @@ public class LightingOptionsActivity extends AppCompatActivity {
             public void afterTextChanged(Editable s) {
                 infoEdited = true;
                 try {
-                    light.setTimerOffTime(light.timeFormat.parse(s.toString()));
+                    newLightInstance.setTimerOffTime(LightController.timeFormat.parse(s.toString()));
                     endTime.setError(null);
                 } catch (ParseException e) {
                     endTime.setError("Invalid format, please enter \"hh:mm am/pm\"");
@@ -127,7 +134,7 @@ public class LightingOptionsActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 try {
-                    startTime.setText(light.timeFormat.format(getSunriseTime(month)));
+                    startTime.setText(LightController.timeFormat.format(getSunriseTime(month)));
                 } catch (ParseException e) {
                     startTime.setText("Error");
                 }
@@ -139,7 +146,7 @@ public class LightingOptionsActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 try {
-                    endTime.setText(light.timeFormat.format(getSunsetTime(month)));
+                    endTime.setText(LightController.timeFormat.format(getSunsetTime(month)));
                 } catch (ParseException e) {
                     startTime.setText("Error");
                 }
@@ -150,8 +157,10 @@ public class LightingOptionsActivity extends AppCompatActivity {
         saveBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                light.saveInfo();
-                setResult(Activity.RESULT_OK, new Intent().putExtra(Constants.LightKey,light).putExtra(Constants.OldLightKey,oldLightInstance));
+                myDatabase.getLightList().get(lightPos).copyLightParameters(newLightInstance);
+                myDatabase.getLightList().get(lightPos).saveInfo();
+                //setResult(Activity.RESULT_OK, new Intent().putExtra(Constants.LightKey,light).putExtra(Constants.OldLightKey, newLightInstance));
+                setResult(Activity.RESULT_OK);
                 finish();
             }
         });
@@ -164,8 +173,8 @@ public class LightingOptionsActivity extends AppCompatActivity {
                     //exit without saving
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        //light = oldLightInstance;
-                        //setResult(Activity.RESULT_OK, new Intent().putExtra(Constants.LightKey,light).putExtra(Constants.OldLightKey,oldLightInstance.getLightName()));
+                        //light = newLightInstance;
+                        //setResult(Activity.RESULT_OK, new Intent().putExtra(Constants.LightKey,light).putExtra(Constants.OldLightKey,newLightInstance.getLightName()));
                         finish();
 
                     }

@@ -4,45 +4,50 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
-
-import org.w3c.dom.Text;
-
-import java.util.Timer;
-import java.util.TimerTask;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 //Login
 public class LoginActivity extends AppCompatActivity {
 
-    private TextView mTextMessage;
-    private Button login;
-    private EditText userNameEdit,passwordEdit;
-    private TextView errorView;
+    private Button continueBtn,signoutBtn;
+    private EditText userNameEdit;
+    private TextView errorView, noIDView, accountNameView;
     private FirebaseAuth mAuth;
+    private FirebaseDatabase database;
     private GoogleSignInClient mGoogleSignInClient;
+    private SignInButton googleSignInBtn;
+    private ProgressBar progressBar;
     private static final String TAG = "GoogleActivity";
     private static final int RC_SIGN_IN = 9001;
 
@@ -63,46 +68,83 @@ public class LoginActivity extends AppCompatActivity {
         mGoogleSignInClient = GoogleSignIn.getClient(this,gso);
 
         mAuth = FirebaseAuth.getInstance();
+        database = FirebaseDatabase.getInstance();
 
 
 
 
 
 
-
-        login = findViewById(R.id.loginBtn);
+        progressBar = findViewById(R.id.progressBar);
+        progressBar.setVisibility(View.GONE);
+        continueBtn = findViewById(R.id.continueBtn);
+        continueBtn.setEnabled(false);
+        continueBtn.setBackgroundColor(ContextCompat.getColor(this,R.color.white_90));
         userNameEdit=findViewById(R.id.username_edit);
-        passwordEdit=findViewById(R.id.password_Edit);
+        googleSignInBtn=findViewById(R.id.google_button);
         errorView=findViewById(R.id.error_TextView);
-        errorView.setVisibility(View.INVISIBLE);
+        errorView.setVisibility(View.GONE);
+        noIDView=findViewById(R.id.noID_TextView);
+        accountNameView=findViewById(R.id.googleUser_view);
+        signoutBtn=findViewById(R.id.google_signout);
 
-        //TODO make google sign in button
+
+
         //TODO make system id field if user isn't associated with a system
-        login.setOnClickListener(new View.OnClickListener(){
+        continueBtn.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 //TODO check if username and password are in database
-                signIn();
-//                if(userNameEdit.getText().toString().equals("admin") &&
-//                    passwordEdit.getText().toString().equals("admin")){
-//                    //Toast.makeText(getApplicationContext(),"Logging In",Toast.LENGTH_SHORT).show();
-//                    //TODO connect to server
+                if(userNameEdit.getText().toString().equals("admin")){
+                    startActivityForResult(new Intent(LoginActivity.this,LightingActivity.class),0);
+                }else{
+                    progressBar.setVisibility(View.VISIBLE);
+                    try {
+                        myDatabase.createDatabase(userNameEdit.getText().toString());
+                        continueToApp();
+                    } catch (FirebaseException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
 
-//                    new Timer().schedule(new TimerTask() {
-//                        @Override
-//                        public void run() {
-//                            finish();
-//                        }
-//                    },5000);
-//                }else{
-//                    errorView.setVisibility(View.VISIBLE);
-//                }
+        googleSignInBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                signIn();
+            }
+        });
+
+        signoutBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mGoogleSignInClient.signOut();
+                mAuth.signOut();
+                updateUI(null);
+            }
+        });
+        userNameEdit.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                continueBtn.setEnabled(true);
+                continueBtn.setBackgroundColor(ContextCompat.getColor(LoginActivity.this,R.color.white_50));
             }
         });
 
 
-
     }
+
 
     @Override
     protected void onStart() {
@@ -119,7 +161,7 @@ public class LoginActivity extends AppCompatActivity {
             try {
                 // Google Sign In was successful, authenticate with Firebase
                 GoogleSignInAccount account = task.getResult(ApiException.class);
-                firebaseAuthWithGoogle(account);
+                fireBaseAuthWithGoogle(account);
             } catch (ApiException e) {
                 // Google Sign In failed, update UI appropriately
                 Log.w(TAG, "Google sign in failed", e);
@@ -129,13 +171,13 @@ public class LoginActivity extends AppCompatActivity {
             }
         }else if (requestCode == Constants.LOGOUT_REQUEST){
             mAuth.signOut();
-            mGoogleSignInClient.revokeAccess();
+            mGoogleSignInClient.signOut();
             updateUI(null);
         }
     }
 
-    private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
-        Log.d(TAG, "firebaseAuthWithGoogle:" + acct.getId());
+    private void fireBaseAuthWithGoogle(GoogleSignInAccount acct) {
+        Log.d(TAG, "fireBaseAuthWithGoogle:" + acct.getId());
 
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
         mAuth.signInWithCredential(credential)
@@ -146,7 +188,7 @@ public class LoginActivity extends AppCompatActivity {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInWithCredential:success");
                             FirebaseUser user = mAuth.getCurrentUser();
-                            continueToApp();
+                            updateUI(user);
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "signInWithCredential:failure", task.getException());
@@ -160,14 +202,39 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void continueToApp() {
-        //TODO check if user is associated with system, if not, prompt for system id
+        progressBar.setVisibility(View.GONE);
         startActivityForResult(new Intent(LoginActivity.this,LightingActivity.class), 0);
     }
 
     private void updateUI(FirebaseUser user){
         if(user !=null){
-            userNameEdit.setText(user.getDisplayName());
-            user.getUid(); //TODO somehow associate this with home ID?
+            DatabaseReference userRef = database.getReference("Users/" + user.getUid());
+            userRef.child("SystemID").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    String systemID = dataSnapshot.getValue(Integer.class).toString();
+                    userNameEdit.setText(systemID);
+                    if(systemID.isEmpty()){
+                        noIDView.setVisibility(View.VISIBLE);
+                    }else {
+                        noIDView.setVisibility(View.GONE);
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    Log.d("Database", "error finding data, " + databaseError.getMessage());
+                }
+            });
+            googleSignInBtn.setVisibility(View.GONE);
+            accountNameView.setVisibility(View.VISIBLE);
+            accountNameView.setText(user.getDisplayName());
+            signoutBtn.setVisibility(View.VISIBLE);
+        }else{
+            userNameEdit.setText(null);
+            googleSignInBtn.setVisibility(View.VISIBLE);
+            accountNameView.setVisibility(View.GONE);
+            signoutBtn.setVisibility(View.GONE);
         }
 
     }
