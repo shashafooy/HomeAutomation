@@ -208,10 +208,9 @@ public class LoginActivity extends AppCompatActivity {
 
     private void updateUI(FirebaseUser user){
         if(user !=null){
-            DatabaseReference userRef = database.getReference("Users/" + user.getUid());
-            userRef.child("SystemID").addListenerForSingleValueEvent(new ValueEventListener() {
+            myDatabase.readData(database.getReference("Users/" + user.getUid() + "/SystemID"), new myDatabase.OnGetDataListener() {
                 @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                public void onSuccess(DataSnapshot dataSnapshot) {
                     String systemID = dataSnapshot.getValue(Integer.class).toString();
                     userNameEdit.setText(systemID);
                     if(systemID.isEmpty()){
@@ -222,7 +221,12 @@ public class LoginActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
+                public void onStart() {
+
+                }
+
+                @Override
+                public void onFailure(DatabaseError databaseError) {
                     Log.d("Database", "error finding data, " + databaseError.getMessage());
                 }
             });

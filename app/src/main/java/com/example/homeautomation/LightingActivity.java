@@ -41,7 +41,7 @@ public class LightingActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed(){
-        if(counter>1){
+        if(counter-->1){
             super.onBackPressed();
         }
         //do nothing if this is the last activity

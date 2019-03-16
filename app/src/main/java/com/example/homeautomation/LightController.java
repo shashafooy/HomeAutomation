@@ -52,9 +52,9 @@ public class LightController implements Parcelable {
 
     public LightController(DatabaseReference lightRef){
         lightReference=lightRef;
-        lightReference.addValueEventListener(new ValueEventListener() {
+        myDatabase.continuousReadData(lightReference, new myDatabase.OnGetDataListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            public void onSuccess(DataSnapshot dataSnapshot) {
                 lightName = (String) dataSnapshot.child("Name").getValue();
                 lightActive = (Boolean) dataSnapshot.child("Active").getValue();
                 timerActive = (Boolean) dataSnapshot.child("TimerActive").getValue();
@@ -68,7 +68,12 @@ public class LightController implements Parcelable {
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
+            public void onStart() {
+
+            }
+
+            @Override
+            public void onFailure(DatabaseError databaseError) {
 
             }
         });

@@ -2,6 +2,7 @@ package com.example.homeautomation;
 
 import android.renderscript.Sampler;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.google.firebase.FirebaseException;
 import com.google.firebase.database.DataSnapshot;
@@ -12,6 +13,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public final class myDatabase {
     private static FirebaseDatabase database;
@@ -24,9 +26,9 @@ public final class myDatabase {
     public interface OnGetDataListener{
         void onSuccess(DataSnapshot dataSnapshot);
         void onStart();
-        void onFailure();
+        void onFailure(DatabaseError databaseError);
     }
-
+    //TODO not waiting to read data
     public static void readData(DatabaseReference ref, final OnGetDataListener listener){
         listener.onStart();
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -37,7 +39,7 @@ public final class myDatabase {
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-                listener.onFailure();
+                listener.onFailure(databaseError);
             }
         });
     }
@@ -52,24 +54,25 @@ public final class myDatabase {
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-                listener.onFailure();
+                listener.onFailure(databaseError);
             }
         });
     }
 
     public static void createDatabase(final String SystemID) throws FirebaseException {
         final ArrayList<Boolean> systemExists = new ArrayList<>();
-        //final boolean systemExists;
+//        systemExists.add(false);
         systemID=SystemID;
         database = FirebaseDatabase.getInstance();
         baseReference = database.getReference().child("Systems");
         //check if database has systemID
 
-
-        readData(baseReference, new OnGetDataListener() {
+        final CountDownLatch done = new CountDownLatch(1);
+        readData(database.getReference().child("SystemIDs"), new OnGetDataListener() {
             @Override
             public void onSuccess(DataSnapshot dataSnapshot) {
                 systemExists.add(dataSnapshot.hasChild(SystemID));
+                done.countDown();
             }
 
             @Override
@@ -78,22 +81,17 @@ public final class myDatabase {
             }
 
             @Override
-            public void onFailure() {
-
+            public void onFailure(DatabaseError databaseError) {
+                Log.d("myDatabase", "onFailure: Could not access database");
+                systemExists.add(false);
             }
         });
-//        baseReference.addListenerForSingleValueEvent(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-//                systemExists.add(dataSnapshot.hasChild(SystemID));
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError databaseError) {
-//
-//            }
-//        });
-        if(!systemExists.get(0)) throw new FirebaseException("System ID does not exist in database");
+//        try {
+//            done.await();
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+//        if(!systemExists.get(0)) throw new FirebaseException("System ID does not exist in database");
         baseReference= baseReference.child(SystemID);
 
         lights = new ArrayList<>();
@@ -114,7 +112,7 @@ public final class myDatabase {
             }
 
             @Override
-            public void onFailure() {
+            public void onFailure(DatabaseError databaseError) {
 
             }
         });
@@ -144,8 +142,8 @@ public final class myDatabase {
         continuousReadData(baseReference.child("WasherDryer"), new OnGetDataListener() {
             @Override
             public void onSuccess(DataSnapshot dataSnapshot) {
-                dryerActive=(Boolean) dataSnapshot.child("DryerActive").getValue();
-                washerActive=(Boolean) dataSnapshot.child("WasherActive").getValue();
+                dryerActive= dataSnapshot.child("DryerActive").getValue(Boolean.class);
+                washerActive= dataSnapshot.child("WasherActive").getValue(Boolean.class);
             }
 
             @Override
@@ -154,7 +152,7 @@ public final class myDatabase {
             }
 
             @Override
-            public void onFailure() {
+            public void onFailure(DatabaseError databaseError) {
 
             }
         });
