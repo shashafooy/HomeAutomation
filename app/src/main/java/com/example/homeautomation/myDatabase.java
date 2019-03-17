@@ -1,5 +1,6 @@
 package com.example.homeautomation;
 
+import android.provider.ContactsContract;
 import android.renderscript.Sampler;
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -14,21 +15,54 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 
 public final class myDatabase {
     private static FirebaseDatabase database;
     private static String systemID;
-    private static DatabaseReference baseReference;
+    private static DatabaseReference baseReference, systemReference;
     private static ArrayList<LightController> lights;
     private static ArrayList<DatabaseReference> lightReferences;
     private static boolean washerActive,dryerActive;
+    private static boolean systemValid;
+
+
+    public static void checkIfValid(final String systemId) {
+        if(database==null) database = FirebaseDatabase.getInstance();
+        readData(database.getReference().child("SystemIds"), new OnGetDataListener() {
+            @Override
+            public void onSuccess(DataSnapshot dataSnapshot) {
+                //systemValid=dataSnapshot.hasChild(systemId);
+                DataSnapshot child = dataSnapshot.child(systemId);
+                systemValid=dataSnapshot.hasChild(systemId);
+//                semaphore.release();
+//                systemExists.add(dataSnapshot.hasChild(SystemID));
+//                done.countDown();
+            }
+
+            @Override
+            public void onStart() {
+
+            }
+
+            @Override
+            public void onFailure(DatabaseError databaseError) {
+                Log.d("myDatabase", "onFailure: Could not access database");
+                systemValid=false;
+//                semaphore.release();
+//                systemExists.add(false);
+            }
+        });
+    }
+
+    public static boolean isSystemValid() { return systemValid;}
 
     public interface OnGetDataListener{
         void onSuccess(DataSnapshot dataSnapshot);
         void onStart();
         void onFailure(DatabaseError databaseError);
     }
-    //TODO not waiting to read data
+
     public static void readData(DatabaseReference ref, final OnGetDataListener listener){
         listener.onStart();
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -59,50 +93,26 @@ public final class myDatabase {
         });
     }
 
+    public static DatabaseReference getBaseReference() { return baseReference;}
+
     public static void createDatabase(final String SystemID) throws FirebaseException {
         final ArrayList<Boolean> systemExists = new ArrayList<>();
 //        systemExists.add(false);
         systemID=SystemID;
-        database = FirebaseDatabase.getInstance();
-        baseReference = database.getReference().child("Systems");
-        //check if database has systemID
 
-        final CountDownLatch done = new CountDownLatch(1);
-        readData(database.getReference().child("SystemIDs"), new OnGetDataListener() {
-            @Override
-            public void onSuccess(DataSnapshot dataSnapshot) {
-                systemExists.add(dataSnapshot.hasChild(SystemID));
-                done.countDown();
-            }
-
-            @Override
-            public void onStart() {
-
-            }
-
-            @Override
-            public void onFailure(DatabaseError databaseError) {
-                Log.d("myDatabase", "onFailure: Could not access database");
-                systemExists.add(false);
-            }
-        });
-//        try {
-//            done.await();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-//        if(!systemExists.get(0)) throw new FirebaseException("System ID does not exist in database");
-        baseReference= baseReference.child(SystemID);
+        if(!systemValid) throw new FirebaseException("System ID does not exist in database");
+        baseReference = database.getReference().child("Systems/" + SystemID);
 
         lights = new ArrayList<>();
-        lightReferences = new ArrayList<>();
+//        lightReferences = new ArrayList<>();
         //get all light references
+        //TODO run this as Task(?) and have main thread wait until data is initialized
         readData(baseReference.child("Lights"), new OnGetDataListener() {
             @Override
             public void onSuccess(DataSnapshot dataSnapshot) {
                 for (DataSnapshot child :
                         dataSnapshot.getChildren()) {
-                    lightReferences.add(child.getRef());
+                    lights.add(new LightController(child.getRef()));
                 }
             }
 
@@ -117,27 +127,6 @@ public final class myDatabase {
             }
         });
 
-
-//        baseReference.child("Lights").addListenerForSingleValueEvent(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-//                for (DataSnapshot child :
-//                        dataSnapshot.getChildren()) {
-//                    lightReferences.add(child.getRef());
-//                }
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError databaseError) {
-//
-//            }
-//        });
-
-        //add controller for each light
-        for (DatabaseReference lightRef :
-                lightReferences) {
-            lights.add(new LightController(lightRef));
-        }
         //add listeners for washer/dryer
         continuousReadData(baseReference.child("WasherDryer"), new OnGetDataListener() {
             @Override
@@ -156,19 +145,6 @@ public final class myDatabase {
 
             }
         });
-//        baseReference.child("WasherDryer").addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-//                dryerActive=(Boolean) dataSnapshot.child("DryerActive").getValue();
-//                washerActive=(Boolean) dataSnapshot.child("WasherActive").getValue();
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError databaseError) {
-//
-//            }
-//        });
-
     }
 
     public static DatabaseReference getLightReference(final String lightName){

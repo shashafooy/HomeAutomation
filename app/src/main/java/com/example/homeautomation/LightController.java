@@ -64,7 +64,6 @@ public class LightController implements Parcelable {
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
-                notify();
             }
 
             @Override

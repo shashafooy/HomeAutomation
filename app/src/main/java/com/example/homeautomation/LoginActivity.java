@@ -99,11 +99,18 @@ public class LoginActivity extends AppCompatActivity {
                     startActivityForResult(new Intent(LoginActivity.this,LightingActivity.class),0);
                 }else{
                     progressBar.setVisibility(View.VISIBLE);
-                    try {
-                        myDatabase.createDatabase(userNameEdit.getText().toString());
-                        continueToApp();
-                    } catch (FirebaseException e) {
-                        e.printStackTrace();
+                    progressBar.bringToFront();
+                    if(myDatabase.isSystemValid()) {
+                        DatabaseReference userSystemIDRef = database.getReference().child("Users/" + FirebaseAuth.getInstance().getCurrentUser().getUid() + "/SystemID");
+                        userSystemIDRef.setValue(Integer.parseInt(userNameEdit.getText().toString()));
+                        try {
+                            myDatabase.createDatabase(userNameEdit.getText().toString());
+                            continueToApp();
+                        } catch (FirebaseException e) {
+                            e.printStackTrace();
+                            progressBar.setVisibility(View.GONE);
+                            errorView.setVisibility(View.VISIBLE);
+                        }
                     }
                 }
             }
@@ -137,8 +144,17 @@ public class LoginActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                continueBtn.setEnabled(true);
-                continueBtn.setBackgroundColor(ContextCompat.getColor(LoginActivity.this,R.color.white_50));
+                if(s.toString().length()==9) {
+                    continueBtn.setEnabled(true);
+                    continueBtn.setBackgroundColor(ContextCompat.getColor(LoginActivity.this, R.color.white_50));
+                    myDatabase.checkIfValid(s.toString());
+                }else{
+                    //incorrect length
+                    continueBtn.setEnabled(false);
+                    continueBtn.setBackgroundColor(ContextCompat.getColor(LoginActivity.this,R.color.white_90));
+                    userNameEdit.setError("Invalid entry, must be 9 numbers long");
+                }
+
             }
         });
 
@@ -188,6 +204,8 @@ public class LoginActivity extends AppCompatActivity {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInWithCredential:success");
                             FirebaseUser user = mAuth.getCurrentUser();
+                            DatabaseReference usersRef = database.getReference().child("Users");
+                            usersRef.child(user.getUid() + "/SystemID").setValue(-1);
                             updateUI(user);
                         } else {
                             // If sign in fails, display a message to the user.
@@ -206,17 +224,29 @@ public class LoginActivity extends AppCompatActivity {
         startActivityForResult(new Intent(LoginActivity.this,LightingActivity.class), 0);
     }
 
-    private void updateUI(FirebaseUser user){
+    private void updateUI(final FirebaseUser user){
         if(user !=null){
             myDatabase.readData(database.getReference("Users/" + user.getUid() + "/SystemID"), new myDatabase.OnGetDataListener() {
                 @Override
                 public void onSuccess(DataSnapshot dataSnapshot) {
-                    String systemID = dataSnapshot.getValue(Integer.class).toString();
-                    userNameEdit.setText(systemID);
-                    if(systemID.isEmpty()){
-                        noIDView.setVisibility(View.VISIBLE);
-                    }else {
-                        noIDView.setVisibility(View.GONE);
+                    if(dataSnapshot.getValue(Integer.class)==null){
+                        mAuth.signOut();
+                        mGoogleSignInClient.signOut();
+                        updateUI(null);
+                    }
+                    else{
+                        String systemID = dataSnapshot.getValue(Integer.class).toString();
+                        if(systemID.equals("-1"))systemID="";
+                        userNameEdit.setText(systemID);
+                        if (systemID.isEmpty()) {
+                            noIDView.setVisibility(View.VISIBLE);
+                        } else {
+                            noIDView.setVisibility(View.GONE);
+                        }
+                        googleSignInBtn.setVisibility(View.GONE);
+                        accountNameView.setVisibility(View.VISIBLE);
+                        accountNameView.setText(user.getDisplayName());
+                        signoutBtn.setVisibility(View.VISIBLE);
                     }
                 }
 
@@ -228,17 +258,17 @@ public class LoginActivity extends AppCompatActivity {
                 @Override
                 public void onFailure(DatabaseError databaseError) {
                     Log.d("Database", "error finding data, " + databaseError.getMessage());
+                    mAuth.signOut();
+                    mGoogleSignInClient.signOut();
+                    updateUI(null);
                 }
             });
-            googleSignInBtn.setVisibility(View.GONE);
-            accountNameView.setVisibility(View.VISIBLE);
-            accountNameView.setText(user.getDisplayName());
-            signoutBtn.setVisibility(View.VISIBLE);
         }else{
             userNameEdit.setText(null);
             googleSignInBtn.setVisibility(View.VISIBLE);
             accountNameView.setVisibility(View.GONE);
             signoutBtn.setVisibility(View.GONE);
+            errorView.setVisibility(View.GONE);
         }
 
     }
