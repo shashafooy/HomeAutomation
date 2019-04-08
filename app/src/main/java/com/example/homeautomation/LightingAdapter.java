@@ -3,7 +3,6 @@ package com.example.homeautomation;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.media.Image;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,13 +14,11 @@ import android.widget.ListAdapter;
 import android.widget.Switch;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-
-public class LightingAdapter extends BaseAdapter implements ListAdapter {
-    private Context context;
+class LightingAdapter extends BaseAdapter implements ListAdapter {
+    private final Context context;
     // private LightController light;
 
-    public LightingAdapter(Context context){
+    LightingAdapter(Context context){
         this.context=context;
     }
 
@@ -49,23 +46,25 @@ public class LightingAdapter extends BaseAdapter implements ListAdapter {
             view = inflater.inflate(R.layout.light_bar,null);
         }
 
+
         TextView listItemText = view.findViewById(R.id.lightName);
         listItemText.setText(myDatabase.getLightList().get(position).getLightName());
 
-        ImageButton settingsBtn = (ImageButton)view.findViewById(R.id.lightSettingsBtn);
-        final Switch lightSwitch = (Switch)view.findViewById(R.id.lightSwitch);
+        ImageButton settingsBtn = view.findViewById(R.id.lightSettingsBtn);
+        final Switch lightSwitch = view.findViewById(R.id.lightSwitch);
 
         settingsBtn.setOnClickListener(new View.OnClickListener(){
 
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(v.getContext(),LightingOptionsActivity.class);
-                intent.putExtra(Constants.LightKey,myDatabase.getLightList().get(position).getLightName()); //TODO check this
+                intent.putExtra(Constants.LightKey, myDatabase.getLightList().get(position).getLightName());
                 ((Activity) context).startActivityForResult(intent, Constants.RequestLightCode);
                 notifyDataSetChanged();
 
             }
         });
+        lightSwitch.setChecked(myDatabase.getLightList().get(position).isActive());
         lightSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -81,10 +80,7 @@ public class LightingAdapter extends BaseAdapter implements ListAdapter {
         return view;
     }
 
-    public void onActivityResult(int requestCode,int resultCode, Intent data){
-        //Log.d("LightingAdapter","onActivityResult");
-        LightController light, oldLight;
-
+    void onActivityResult(int requestCode){
         switch(requestCode){
             case Constants.RequestLightCode:
                 notifyDataSetChanged();

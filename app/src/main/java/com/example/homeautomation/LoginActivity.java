@@ -1,6 +1,9 @@
 package com.example.homeautomation;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -35,7 +38,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
 //Login
 public class LoginActivity extends AppCompatActivity {
@@ -57,6 +59,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.login_main);
         FirebaseApp.initializeApp(this);
+        createNotificationChannel();
 
 
         // Configure Google Sign In
@@ -69,11 +72,6 @@ public class LoginActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance();
-
-
-
-
-
 
         progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(View.GONE);
@@ -89,30 +87,29 @@ public class LoginActivity extends AppCompatActivity {
         signoutBtn=findViewById(R.id.google_signout);
 
 
-
-        //TODO make system id field if user isn't associated with a system
         continueBtn.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                //TODO check if username and password are in database
-                if(userNameEdit.getText().toString().equals("admin")){
-                    startActivityForResult(new Intent(LoginActivity.this,LightingActivity.class),0);
-                }else{
-                    progressBar.setVisibility(View.VISIBLE);
-                    progressBar.bringToFront();
-                    if(myDatabase.isSystemValid()) {
-                        DatabaseReference userSystemIDRef = database.getReference().child("Users/" + FirebaseAuth.getInstance().getCurrentUser().getUid() + "/SystemID");
-                        userSystemIDRef.setValue(Integer.parseInt(userNameEdit.getText().toString()));
-                        try {
-                            myDatabase.createDatabase(userNameEdit.getText().toString());
-                            continueToApp();
-                        } catch (FirebaseException e) {
-                            e.printStackTrace();
-                            progressBar.setVisibility(View.GONE);
-                            errorView.setVisibility(View.VISIBLE);
-                        }
+//                if(userNameEdit.getText().toString().equals("admin")){
+//                    startActivityForResult(new Intent(LoginActivity.this,LightingActivity.class),0);
+//                }else{
+//                    progressBar.setVisibility(View.VISIBLE);
+//                    progressBar.bringToFront();
+                if (myDatabase.isSystemValid()) {
+                    DatabaseReference userRef = database.getReference().child("Users/" + FirebaseAuth.getInstance().getCurrentUser().getUid());
+                    userRef.child("SystemID").setValue(Integer.parseInt(userNameEdit.getText().toString()));
+                    try {
+                        myDatabase.createDatabase(getApplicationContext(), userNameEdit.getText().toString(), userRef);
+                        continueToApp();
+                    } catch (FirebaseException e) {
+                        e.printStackTrace();
+                        progressBar.setVisibility(View.GONE);
+                        errorView.setVisibility(View.VISIBLE);
                     }
+                } else {
+                    errorView.setVisibility(View.VISIBLE);
                 }
+//                }
             }
         });
 
@@ -159,6 +156,22 @@ public class LoginActivity extends AppCompatActivity {
         });
 
 
+    }
+
+    private void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = getString(R.string.channel_name);
+            String description = getString(R.string.channel_description);
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(Constants.CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
     }
 
 

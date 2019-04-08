@@ -1,15 +1,13 @@
 package com.example.homeautomation;
 
+import android.annotation.SuppressLint;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.annotation.NonNull;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.ValueEventListener;
 
-import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -21,8 +19,10 @@ public class LightController implements Parcelable {
     private Date timerOnTime;
     private Date timerOffTime;
     // may need hh instead of h, hh will cause leading 0 (07:00)
-    public static DateFormat timeFormat = new SimpleDateFormat("h:mm a");
-    private DatabaseReference lightReference;
+    @SuppressLint("SimpleDateFormat")
+    static final DateFormat timeFormat = new SimpleDateFormat("h:mm a");
+    private final DatabaseReference lightReference;
+    boolean initialized;
 
 
 //    public LightController(String lightName){
@@ -50,8 +50,9 @@ public class LightController implements Parcelable {
 //
 //    }
 
-    public LightController(DatabaseReference lightRef){
+    LightController(DatabaseReference lightRef){
         lightReference=lightRef;
+        initialized = false;
         myDatabase.continuousReadData(lightReference, new myDatabase.OnGetDataListener() {
             @Override
             public void onSuccess(DataSnapshot dataSnapshot) {
@@ -64,6 +65,7 @@ public class LightController implements Parcelable {
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
+                initialized = true;
             }
 
             @Override
@@ -78,21 +80,14 @@ public class LightController implements Parcelable {
         });
     }
 
-    public LightController(LightController another){
-        this.lightName = new String(another.getLightName());
+    LightController(LightController another){
+        this.lightName = another.getLightName();
         this.timerActive = another.getTimerActive();
         this.timerOnTime = another.getTimerOnTime();
         this.timerOffTime = another.getTimerOffTime();
         this.lightReference = another.lightReference;
-    }
-
-    public LightController(Parcel source){
-        lightName = source.readString();
-        timerActive = source.readByte() != 0;
-        timerOnTime = new Date(source.readLong());
-        timerOffTime = new Date(source.readLong());
-        lightReference = myDatabase.getLightReference(lightName);
-
+        this.lightActive = another.lightActive;
+        this.initialized = another.initialized;
     }
 
     @Override
@@ -107,20 +102,20 @@ public class LightController implements Parcelable {
         dest.writeLong(timerOnTime.getTime());
         dest.writeLong(timerOffTime.getTime());
     }
+//
+//    public static final Creator<LightController> CREATOR = new Creator<LightController>() {
+//        @Override
+//        public LightController[] newArray(int size) {
+//            return new LightController[size];
+//        }
+//
+//        @Override
+//        public LightController createFromParcel(Parcel source) {
+//            return new LightController(source);
+//        }
+//    };
 
-    public static final Creator<LightController> CREATOR = new Creator<LightController>() {
-        @Override
-        public LightController[] newArray(int size) {
-            return new LightController[size];
-        }
-
-        @Override
-        public LightController createFromParcel(Parcel source) {
-            return new LightController(source);
-        }
-    };
-
-    public void copyLightParameters(LightController light){
+    void copyLightParameters(LightController light){
         lightActive = light.lightActive;
         lightName = light.lightName;
         timerActive = light.timerActive;
@@ -128,17 +123,17 @@ public class LightController implements Parcelable {
         timerOnTime = light.timerOnTime;
     }
 
-    public void turnOn() {
+    void turnOn() {
         lightActive=true;
         lightReference.child("Active").setValue(true);
     }
 
-    public void turnOff() {
+    void turnOff() {
         lightActive=false;
         lightReference.child("Active").setValue(false);
     }
 
-    public void saveInfo(){
+    void saveInfo(){
         lightReference.child("Active").setValue(lightActive);
         lightReference.child("Name").setValue(lightName);
         lightReference.child("TimerActive").setValue(timerActive);
@@ -147,8 +142,8 @@ public class LightController implements Parcelable {
 
     }
 
-    public Boolean getTimerActive() {
-        return timerActive;
+    Boolean getTimerActive() {
+        return initialized ? timerActive : false;
     }
 
     public void setTimerActive(Boolean timerActive) {
@@ -156,7 +151,7 @@ public class LightController implements Parcelable {
     }
 
     public String getLightName() {
-        return lightName;
+        return initialized ? lightName : "Loading";
     }
 
     public void setLightName(String lightName) {
@@ -181,7 +176,9 @@ public class LightController implements Parcelable {
 
     public DatabaseReference getLightReference() { return lightReference; }
 
-    public Boolean getLightActive() { return lightActive; }
+    public Boolean isActive() {
+        return lightActive;
+    }
 
-    public void setLightActive(Boolean lightActive) { this.lightActive = lightActive; }
+    // --Commented out by Inspection (4/7/2019 9:42 PM):public void setLightActive(Boolean lightActive) { this.lightActive = lightActive; }
 }

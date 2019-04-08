@@ -1,26 +1,22 @@
 package com.example.homeautomation;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.widget.ListView;
-import android.widget.Toast;
-
-import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class LightingActivity extends AppCompatActivity
 {
     private LightingAdapter lightingAdapter;
-    private ListView lView;
-    private AlertDialog.Builder exitDialogBuilder;
     private static int counter;
+    private final Handler handler = new Handler();
+    private boolean initialized;
+    private BottomNavigationView bottomNavigationView;
+
 
 
     @Override
@@ -28,15 +24,47 @@ public class LightingActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.lighting_main);
         counter++; //number of instances of activity
+        initialized = false;//myDatabase.AllLightsInitialized();
 
         lightingAdapter = new LightingAdapter(this);
 
-        lView = findViewById(R.id.lightingListView);
+        ListView lView = findViewById(R.id.lightingListView);
         lView.setAdapter(lightingAdapter);
 
-        BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
+        AutoRefresh();
+
+//        final Runnable timedTask = new Runnable(){
+//
+//            @Override
+//            public void run() {
+//                lightingAdapter.notifyDataSetChanged();
+//                if(!myDatabase.AllLightsInitialized()){
+//                    handler.postDelayed(timedTask, 3000);
+//                }
+//            }
+//        };
+//
+//        if(!myDatabase.AllLightsInitialized()) handler.postDelayed(timedTask, 2000);
+
+
+        bottomNavigationView = findViewById(R.id.bottom_navigation);
         bottomNavigationView.setSelectedItemId(R.id.action_lighting);
         bottomNavigationView.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+    }
+
+
+    private void AutoRefresh() {
+        //update every 10 seconds, unless not initialized, then update every second
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                lightingAdapter.notifyDataSetChanged();
+                if (!initialized) {
+                    initialized = myDatabase.AllLightsInitialized();
+                    AutoRefresh();
+                }
+            }
+        }, initialized ? 10000 : 1000);
     }
 
     @Override
@@ -55,19 +83,21 @@ public class LightingActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
         lightingAdapter.notifyDataSetChanged();
+        bottomNavigationView.setSelectedItemId(R.id.action_lighting);
+
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data){
         if(requestCode == Constants.RequestLightCode){
-            lightingAdapter.onActivityResult(requestCode,resultCode,data);
+            lightingAdapter.onActivityResult(requestCode);
         }else if(requestCode == Constants.LOGOUT_REQUEST){
             setResult(resultCode); //logout
             finish();
         }
     }
 
-    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
+    private final BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
         @Override
@@ -78,21 +108,9 @@ public class LightingActivity extends AppCompatActivity
                     return true;
                 case R.id.action_washer_dryer:
                     startActivityForResult(new Intent(LightingActivity.this, WasherDryerActivity.class),0);
-//                    new Timer().schedule(new TimerTask() {
-//                        @Override
-//                        public void run() {
-//                            finish();
-//                        }
-//                    },5000);
                     return true;
                 case R.id.action_settings:
                     startActivityForResult(new Intent(LightingActivity.this, SettingsActivity.class),0);
-//                    new Timer().schedule(new TimerTask() {
-//                        @Override
-//                        public void run() {
-//                            finish();
-//                        }
-//                    },5000);
                     return true;
             }
             return false;

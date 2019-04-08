@@ -2,7 +2,6 @@ package com.example.homeautomation;
 
 import android.app.Activity;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -21,10 +20,8 @@ import java.util.Date;
 
 public class LightingOptionsActivity extends AppCompatActivity {
     private LightController light, newLightInstance;
-    private TextView lightNameView;
-    private Switch timerSwitch;
-    private EditText startTime, endTime, newNameEdit;
-    private Button saveBtn, sunriseBtn, sunsetBtn;
+    private EditText startTime;
+    private EditText endTime;
     private boolean infoEdited;
     private int month, lightPos;
     private AlertDialog.Builder exitDialogBuilder;
@@ -47,10 +44,10 @@ public class LightingOptionsActivity extends AppCompatActivity {
         }
         newLightInstance = new LightController(light);
 
-        lightNameView = findViewById(R.id.lightingOptionsTitle);
+        TextView lightNameView = findViewById(R.id.lightingOptionsTitle);
         lightNameView.setText(light.getLightName());
 
-        newNameEdit = findViewById(R.id.LightName_edit);
+        EditText newNameEdit = findViewById(R.id.LightName_edit);
         newNameEdit.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -69,7 +66,7 @@ public class LightingOptionsActivity extends AppCompatActivity {
             }
         });
 
-        timerSwitch = findViewById(R.id.timerSwitch);
+        Switch timerSwitch = findViewById(R.id.timerSwitch);
         timerSwitch.setChecked(light.getTimerActive());
         timerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -129,7 +126,7 @@ public class LightingOptionsActivity extends AppCompatActivity {
             }
         });
 
-        sunriseBtn = findViewById(R.id.startDefaultBtn);
+        Button sunriseBtn = findViewById(R.id.startDefaultBtn);
         sunriseBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -141,7 +138,7 @@ public class LightingOptionsActivity extends AppCompatActivity {
             }
         });
 
-        sunsetBtn = findViewById(R.id.endDefaultBtn);
+        Button sunsetBtn = findViewById(R.id.endDefaultBtn);
         sunsetBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -153,7 +150,7 @@ public class LightingOptionsActivity extends AppCompatActivity {
             }
         });
 
-        saveBtn = findViewById(R.id.saveBtn);
+        Button saveBtn = findViewById(R.id.saveBtn);
         saveBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -206,29 +203,29 @@ public class LightingOptionsActivity extends AppCompatActivity {
     private Date getSunriseTime(int month) throws ParseException {
         switch(month){
             case Calendar.JANUARY:
-                return light.timeFormat.parse("7:00 am");
+                return LightController.timeFormat.parse("7:00 am");
             case Calendar.FEBRUARY:
-                return light.timeFormat.parse("6:45 am");
+                return LightController.timeFormat.parse("6:45 am");
             case Calendar.MARCH:
-                return light.timeFormat.parse("7:00 am");
+                return LightController.timeFormat.parse("7:00 am");
             case Calendar.APRIL:
-                return light.timeFormat.parse("6:27 am");
+                return LightController.timeFormat.parse("6:27 am");
             case Calendar.MAY:
-                return light.timeFormat.parse("5:40 am");
+                return LightController.timeFormat.parse("5:40 am");
             case Calendar.JUNE:
-                return light.timeFormat.parse("5:00 am");
+                return LightController.timeFormat.parse("5:00 am");
             case Calendar.JULY:
-                return light.timeFormat.parse("5:15 am");
+                return LightController.timeFormat.parse("5:15 am");
             case Calendar.AUGUST:
-                return light.timeFormat.parse("5:35 am");
+                return LightController.timeFormat.parse("5:35 am");
             case Calendar.SEPTEMBER:
-                return light.timeFormat.parse("6:15 am");
+                return LightController.timeFormat.parse("6:15 am");
             case Calendar.OCTOBER:
-                return light.timeFormat.parse("6:45 am");
+                return LightController.timeFormat.parse("6:45 am");
             case Calendar.NOVEMBER:
-                return light.timeFormat.parse("6:15 am");
+                return LightController.timeFormat.parse("6:15 am");
             case Calendar.DECEMBER:
-                return light.timeFormat.parse("6:45 am");
+                return LightController.timeFormat.parse("6:45 am");
 
         }
         return null;
@@ -237,29 +234,29 @@ public class LightingOptionsActivity extends AppCompatActivity {
     private Date getSunsetTime(int month) throws ParseException {
         switch(month){
             case Calendar.JANUARY:
-                return light.timeFormat.parse("6:00 pm");
+                return LightController.timeFormat.parse("6:00 pm");
             case Calendar.FEBRUARY:
-                return light.timeFormat.parse("6:30 pm");
+                return LightController.timeFormat.parse("6:30 pm");
             case Calendar.MARCH:
-                return light.timeFormat.parse("8:15 pm");
+                return LightController.timeFormat.parse("8:15 pm");
             case Calendar.APRIL:
-                return light.timeFormat.parse("8:45 pm");
+                return LightController.timeFormat.parse("8:45 pm");
             case Calendar.MAY:
-                return light.timeFormat.parse("9:15 pm");
+                return LightController.timeFormat.parse("9:15 pm");
             case Calendar.JUNE:
-                return light.timeFormat.parse("9:45 pm");
+                return LightController.timeFormat.parse("9:45 pm");
             case Calendar.JULY:
-                return light.timeFormat.parse("9:35 pm");
+                return LightController.timeFormat.parse("9:35 pm");
             case Calendar.AUGUST:
-                return light.timeFormat.parse("9:20 pm");
+                return LightController.timeFormat.parse("9:20 pm");
             case Calendar.SEPTEMBER:
-                return light.timeFormat.parse("8:15 pm");
+                return LightController.timeFormat.parse("8:15 pm");
             case Calendar.OCTOBER:
-                return light.timeFormat.parse("7:30 pm");
+                return LightController.timeFormat.parse("7:30 pm");
             case Calendar.NOVEMBER:
-                return light.timeFormat.parse("5:50 pm");
+                return LightController.timeFormat.parse("5:50 pm");
             case Calendar.DECEMBER:
-                return light.timeFormat.parse("5:45 pm");
+                return LightController.timeFormat.parse("5:45 pm");
 
         }
         return null;
