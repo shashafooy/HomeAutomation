@@ -219,6 +219,8 @@ public class LoginActivity extends AppCompatActivity {
                             FirebaseUser user = mAuth.getCurrentUser();
                             DatabaseReference usersRef = database.getReference().child("Users");
                             usersRef.child(user.getUid() + "/SystemID").setValue(-1);
+                            usersRef.child(user.getUid() + "/DryerTimerOn").setValue(false);
+                            usersRef.child(user.getUid() + "/WasherTimerOn").setValue(false);
                             updateUI(user);
                         } else {
                             // If sign in fails, display a message to the user.

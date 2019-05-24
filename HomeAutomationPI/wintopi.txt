@@ -1,0 +1,7 @@
+open scp://pi:raspberry@169.254.152.100 -hostkey="*"
+cd HomeAutomation/
+put target\HomeAutomation-1.0.jar
+put homeautomation-serviceAccountKey.json
+call java -jar HomeAutomation-1.0.jar 123456789
+close
+exit
