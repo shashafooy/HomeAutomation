@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Home Automation</string>
+    <string name="login_info">Server Id is found on the server box installed in your home. Sign in using google to save your Server Id</string>
+    <string name="id_error">Invalid system ID</string>
+    <string name="start_default">Sunrise</string>
+    <string name="end_default">Sunset</string>
+    <string name="washer_dryer_help">Click on the timer icon to toggle machine alerts when finished.</string>
+    <string name="noID">No system ID associated with your account. Please enter your System ID</string>
+    <string name="channel_name">HomeAutomation_Notifications></string>
+    <string name="channel_description">Notification channel for washer/dryer notifications</string>
+</resources>
